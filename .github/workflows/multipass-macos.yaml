@@ -24,6 +24,15 @@ jobs:
           sudo su -m root -c 'launchctl unload /Library/LaunchDaemons/com.canonical.multipassd.plist'
           sed 's|<string>debug</string>|<string>trace</string>|' /Library/LaunchDaemons/com.canonical.multipassd.plist | sudo tee /Library/LaunchDaemons/com.canonical.multipassd.plist
           sudo su -m root -c 'launchctl load /Library/LaunchDaemons/com.canonical.multipassd.plist'
+      - name: Wait until multipass is ready
+        run: |
+          for i in {1..120}; do
+            if multipass list; then
+              exit 0
+            fi
+          done
+          echo "Multipass took over 2 minutes to start"
+          exit 1
       - name: Print multipass log
         run: |
           sudo cat /Library/Logs/Multipass/multipassd.log
