@@ -45,13 +45,16 @@ jobs:
       - name: Launch noble instance
         run: |
           multipass launch 24.04 --name test
-      - name: Print multipass log
-        run: |
-          sudo cat /Library/Logs/Multipass/multipassd.log
       - name: Attempt to use instance
         run: |
           multipass list
           multipass exec test -- cat /etc/os-release
+      - name: Show network access to instance
+        if: ${{ always() }}
+        run: |
+          vm_ip=$(multipass list --format json | jq -r '.list[] | select( .name == "test" ) | .ipv4[0]')
+          ping -c 4 $vm_ip
+          ssh -vv $vm_ip
       - name: Print multipass log
         if: ${{ always() }}
         run: |
