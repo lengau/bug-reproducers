@@ -52,4 +52,8 @@ jobs:
         run: |
           multipass list
           multipass exec test -- cat /etc/os-release
+      - name: Print multipass log
+        if: ${{ always() }}
+        run: |
+          sudo cat /Library/Logs/Multipass/multipassd.log
 
