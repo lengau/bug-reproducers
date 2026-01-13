@@ -27,6 +27,9 @@ jobs:
           sudo cat /Library/Logs/Multipass/multipassd.log
       - name: Increase logging level and restart multipassd
         run: |
+          multipass_passphrase=$(uuidgen)
+          multipass set local.passphrase=$multipass_passphrase
+          sudo multipass authenticate $multipass_passphrase
           sudo su -m root -c 'launchctl unload /Library/LaunchDaemons/com.canonical.multipassd.plist'
           sed 's|<string>debug</string>|<string>trace</string>|' /Library/LaunchDaemons/com.canonical.multipassd.plist | sudo tee /Library/LaunchDaemons/com.canonical.multipassd.plist
           sudo su -m root -c 'launchctl load /Library/LaunchDaemons/com.canonical.multipassd.plist'
@@ -38,6 +41,18 @@ jobs:
             fi
           done
           echo "Multipass took over 2 minutes to start"
+          exit 1
+      - name: Authenticate root
+        run: |
+          multipass_passphrase=$(uuidgen)
+          multipass set local.passphrase=$multipass_passphrase
+          sudo multipass authenticate $multipass_passphrase
+          for i in {1..120}; do
+            if sudo multipass list; then
+              exit 0
+            fi
+          done
+          echo "Multipass took over 2 minutes to allow root access"
           exit 1
       - name: Print multipass log
         run: |
@@ -53,12 +68,12 @@ jobs:
           multipass launch 24.04 --name test
       - name: Attempt to use instance
         run: |
-          multipass list
-          multipass exec test -- cat /etc/os-release
+          sudo multipass list
+          sudo multipass exec test -- cat /etc/os-release
       - name: Show network access to instance
         if: ${{ always() }}
         run: |
-          vm_ip=$(multipass list --format json | jq -r '.list[] | select( .name == "test" ) | .ipv4[0]')
+          vm_ip=$(sudo multipass list --format json | jq -r '.list[] | select( .name == "test" ) | .ipv4[0]')
           ping -c 4 $vm_ip
           ssh -vv $vm_ip
       - name: Print multipass log
