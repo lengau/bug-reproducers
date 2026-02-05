@@ -1,0 +1,32 @@
+name: python-standalone-bug-reproducer
+base: bare
+build-base: ubuntu@24.04
+version: dev
+summary: A reproducer for a big filed in python-build-standalone
+description: |
+  The bug is that these standalone builds cannot be placed into /
+
+  To use this reproducer, run `rockcraft pack` in the directory of this file.
+  Then run `podman run --rm -i -t oci-archive:python-standalone-bug-reproducer_0.1_amd64.rock exec /bin/python -m site`
+platforms:
+  amd64:
+
+parts:
+  my-part:
+    plugin: nil
+    build-snaps:
+      - astral-uv
+    build-packages:
+      - rsync
+    stage-packages:
+      - base-files_base
+      - libc6_libs
+      # Just for ease of debugging
+      - bash_bins
+      - coreutils_bins
+    override-build: |
+      for version in 3.10 3.11 3.12 3.13 3.14; do
+        uv python install --no-bin --install-dir=$CRAFT_PART_INSTALL $version
+        rsync -ar $CRAFT_PART_INSTALL/cpython-$version*/ $CRAFT_PART_INSTALL
+        rsync -ar $CRAFT_PART_INSTALL/cpython-$version*/ $CRAFT_PART_INSTALL/usr
+      done
