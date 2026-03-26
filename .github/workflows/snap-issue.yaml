@@ -1,0 +1,21 @@
+name: Reproducer for snapd issue in latest ubuntu image
+on:
+  push:
+    branch:
+      - runner-image-20260323-snap
+  # Allows triggering the workflow manually from the Actions tab
+  workflow_dispatch:
+    inputs:
+      enable_ssh_access:
+        type: boolean
+        description: "Enable ssh access"
+        required: false
+        default: false
+
+jobs:
+  snap-reproducer:
+    runs-on: ubuntu-24.04
+    steps:
+      - run: |
+          # This should happen in seconds
+          time sudo snap install --color=never --unicode=never hello-world
